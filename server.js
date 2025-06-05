@@ -92,6 +92,49 @@ app.get("/tasks", authenticateToken, (req, res) => {
   );
 });
 
+app.delete("/task/:id", authenticateToken, (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  const query = "DELETE FROM tasks WHERE id = ? AND user_id = ?";
+
+  db.query(query, [id, userId], (err, result) => {
+    if (err) return res.status(500).json({ error: err });
+    if (result.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ message: "Task not found or not authorized" });
+    }
+    res.json({ message: "Task deleted successfully" });
+  });
+});
+
+app.put("/task/:id", authenticateToken, (req, res) => {
+  const { id } = req.params;
+  const { title, description, is_completed } = req.body;
+  const userId = req.user.id;
+
+  const query = `
+    UPDATE tasks 
+    SET title = ?, description = ?, is_completed = ?
+    WHERE id = ? AND user_id = ?
+  `;
+
+  db.query(
+    query,
+    [title, description, is_completed, id, userId],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: err });
+      if (result.affectedRows === 0) {
+        return res
+          .status(404)
+          .json({ message: "Task not found or not authorized" });
+      }
+      res.json({ message: "Task updated successfully" });
+    }
+  );
+});
+
 app.post("/task", authenticateToken, (req, res) => {
   const { title, description } = req.body;
   const userId = req.user.id;
