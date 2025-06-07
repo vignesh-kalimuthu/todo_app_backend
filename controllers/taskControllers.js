@@ -41,6 +41,8 @@ exports.updateTask = (req, res) => {
   const { id } = req.params;
   const { title, description, is_completed } = req.body;
   const userId = req.user.id;
+  console.log(`Updating task with ID: ${id} for user ID: ${userId}`);
+  
 
   const query = `
     UPDATE tasks 
