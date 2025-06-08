@@ -1,4 +1,4 @@
-const db = require("../models/db");
+const db = require("../db");
 
 // GET /api/tasks/
 exports.getTasks = (req, res) => {
@@ -18,10 +18,11 @@ exports.getTasks = (req, res) => {
 exports.createTask = (req, res) => {
   const { title, description } = req.body;
   const userId = req.user.id;
+  const filePath = req.file ? req.file.path : null;
 
   db.query(
-    "INSERT INTO tasks (title, description, user_id) VALUES (?, ?, ?)",
-    [title, description, userId],
+    "INSERT INTO tasks (title, description, user_id, file_path) VALUES (?, ?, ?, ?)",
+    [title, description, userId, filePath],
     (err, results) => {
       if (err) return res.status(500).json({ error: err });
 
@@ -31,6 +32,7 @@ exports.createTask = (req, res) => {
         description,
         is_completed: false,
         user_id: userId,
+        file_path: filePath,
       });
     }
   );
@@ -42,7 +44,6 @@ exports.updateTask = (req, res) => {
   const { title, description, is_completed } = req.body;
   const userId = req.user.id;
   console.log(`Updating task with ID: ${id} for user ID: ${userId}`);
-  
 
   const query = `
     UPDATE tasks 
