@@ -1,16 +1,17 @@
 const multer = require("multer");
-const path = require("path");
+const multerS3 = require("multer-s3");
+const s3 = require("../config/aws");
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cd) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cd(null, uniqueSuffix + path.extname(file.originalname));
-  },
+const upload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: process.env.AWS_BUCKET_NAME,
+    acl: "public-read",
+    key: function (req, file, cb) {
+      const fileName = `tasks/${Date.now()}_${file.originalname}`;
+      cb(null, fileName);
+    },
+  }),
 });
-
-const upload = multer({ storage: storage });
 
 module.exports = upload;

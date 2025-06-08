@@ -18,11 +18,11 @@ exports.getTasks = (req, res) => {
 exports.createTask = (req, res) => {
   const { title, description } = req.body;
   const userId = req.user.id;
-  const filePath = req.file ? req.file.path : null;
+  const fileUrl = req.file ? req.file.location : null;
 
   db.query(
     "INSERT INTO tasks (title, description, user_id, file_path) VALUES (?, ?, ?, ?)",
-    [title, description, userId, filePath],
+    [title, description, userId, fileUrl],
     (err, results) => {
       if (err) return res.status(500).json({ error: err });
 
@@ -32,7 +32,7 @@ exports.createTask = (req, res) => {
         description,
         is_completed: false,
         user_id: userId,
-        file_path: filePath,
+        file_url: fileUrl,
       });
     }
   );
