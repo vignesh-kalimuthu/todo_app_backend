@@ -1,5 +1,5 @@
 const db = require("../db");
-
+const { s3Client, PutObjectCommand } = require("../config/aws");
 // GET /api/tasks/
 exports.getTasks = (req, res) => {
   const userId = req.user.id;
@@ -15,27 +15,50 @@ exports.getTasks = (req, res) => {
 };
 
 // POST /api/tasks/
-exports.createTask = (req, res) => {
+
+exports.createTask = async (req, res) => {
   const { title, description } = req.body;
   const userId = req.user.id;
-  const fileUrl = req.file ? req.file.location : null;
+  let fileUrl = null;
 
-  db.query(
-    "INSERT INTO tasks (title, description, user_id, file_path) VALUES (?, ?, ?, ?)",
-    [title, description, userId, fileUrl],
-    (err, results) => {
-      if (err) return res.status(500).json({ error: err });
+  try {
+    if (req.file) {
+      const fileName = `${Date.now()}_${req.file.originalname}`;
+      console.log("Uploading file:", fileName);
 
-      res.json({
-        id: results.insertId,
-        title,
-        description,
-        is_completed: false,
-        user_id: userId,
-        file_url: fileUrl,
-      });
+      const bucketName = process.env.AWS_S3_BUCKET_NAME;
+
+      const uploadParams = {
+        Bucket: bucketName,
+        Key: fileName,
+        Body: req.file.buffer,
+        ContentType: req.file.mimetype,
+      };
+
+      await s3Client.send(new PutObjectCommand(uploadParams));
+
+      fileUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
     }
-  );
+
+    db.query(
+      "INSERT INTO tasks (title, description, user_id, file_url) VALUES (?, ?, ?, ?)",
+      [title, description, userId, fileUrl],
+      (err, results) => {
+        if (err) return res.status(500).json({ error: err });
+
+        res.json({
+          id: results.insertId,
+          title,
+          description,
+          is_completed: false,
+          user_id: userId,
+          file_url: fileUrl,
+        });
+      }
+    );
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // PUT /api/tasks/:id
