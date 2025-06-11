@@ -17,7 +17,7 @@ exports.getTasks = (req, res) => {
 // POST /api/tasks/
 
 exports.createTask = async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, status, due_date, priority } = req.body;
   const userId = req.user.id;
   let fileUrl = null;
 
@@ -41,8 +41,16 @@ exports.createTask = async (req, res) => {
     }
 
     db.query(
-      "INSERT INTO tasks (title, description, user_id, file_url) VALUES (?, ?, ?, ?)",
-      [title, description, userId, fileUrl],
+      "INSERT INTO tasks (title, description, user_id, file_url, status, due_date, priority) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [
+        title,
+        description,
+        userId,
+        fileUrl,
+        status || "pending",
+        due_date,
+        priority || "low",
+      ],
       (err, results) => {
         if (err) return res.status(500).json({ error: err });
 
@@ -53,6 +61,10 @@ exports.createTask = async (req, res) => {
           is_completed: false,
           user_id: userId,
           file_url: fileUrl,
+          status: status || "pending",
+          due_date: due_date || null,
+          priority: priority || "low",
+          message: "Task created successfully",
         });
       }
     );
