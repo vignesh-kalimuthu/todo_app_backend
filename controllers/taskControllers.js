@@ -76,19 +76,31 @@ exports.createTask = async (req, res) => {
 // PUT /api/tasks/:id
 exports.updateTask = (req, res) => {
   const { id } = req.params;
-  const { title, description, is_completed } = req.body;
+
+  const { title, description, fileUrl, status, due_date, priority } = req.body;
   const userId = req.user.id;
   console.log(`Updating task with ID: ${id} for user ID: ${userId}`);
 
   const query = `
     UPDATE tasks 
-    SET title = ?, description = ?, is_completed = ?
+    SET title = ?, description = ?, fileUrl = ?, status = ?, due_date = ?, priority = ?
+    , is_completed = ?
     WHERE id = ? AND user_id = ?
   `;
 
   db.query(
     query,
-    [title, description, is_completed, id, userId],
+    [
+      title,
+      description,
+      is_completed,
+      id,
+      userId,
+      fileUrl,
+      status,
+      due_date,
+      priority,
+    ],
     (err, result) => {
       if (err) return res.status(500).json({ error: err });
       if (result.affectedRows === 0) {
